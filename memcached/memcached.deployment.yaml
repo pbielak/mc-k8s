@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: memcached-deployment
+  labels:
+    app: memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached
+  template:
+    metadata:
+      labels:
+        app: memcached
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+          {
+          "name": "setup",
+          "image": "busybox",
+          "imagePullPolicy": "IfNotPresent",
+          "command": ["sh", "-c", "echo \"{\\\"endpoint\\\": \\\"http://pyscaler-service:5000/99th_percentile\\\"}\" > /etc/custom-metrics/definition.json"],
+          "volumeMounts": [{
+            "name": "config",
+            "mountPath": "/etc/custom-metrics"
+          }]
+          }
+        ]'
+    spec:
+      containers:
+      - name: memcached
+        image: memcached:latest
+        ports:
+        - containerPort: 11211
+        volumeMounts:
+        - name: config
+          mountPath: /etc/custom-metrics
+        resources:
+          requests:
+            cpu: 100m
+      volumes:
+      - name: config
+        emptyDir:

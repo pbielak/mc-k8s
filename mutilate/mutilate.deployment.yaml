@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mutilate-deployment
+  labels:
+    app: mutilate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mutilate
+  template:
+    metadata:
+      labels:
+        app: mutilate
+    spec:
+      containers:
+      - name: mutilate
+        image: mutilate:custom-script
+        env:
+        - name: MEMCACHED_HOST
+          value: "memcached-service"
+        - name: MEMCACHED_PORT
+          value: "11211"
