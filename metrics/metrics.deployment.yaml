@@ -1,22 +1,22 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: pyscaler-deployment 
+  name: memcached-metrics-deployment 
   labels:
-    app: pyscaler
+    app: memcached-metrics
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pyscaler
+      app: memcached-metrics
   template:
     metadata:
       labels:
-        app: pyscaler
+        app: memcached-metrics
     spec:
       containers:
-      - name: pyscaler
-        image: memcached-pyscaler:v1
+      - name: memcached-metrics
+        image: memcached-metrics:v1
         ports:
         - containerPort: 5000
         env:

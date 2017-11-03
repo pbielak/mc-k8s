@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: memcached-scaler-deployment 
+  labels:
+    app: memcached-scaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memcached-scaler
+  template:
+    metadata:
+      labels:
+        app: memcached-scaler
+    spec:
+      containers:
+      - name: memcached-scaler
+        image: memcached-scaler:v1
+        env:
+        - name: METRICS_HOST
+          value: "memcached-metrics-service"
+        - name: METRICS_PORT
+          value: "5000"

@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -10,7 +11,7 @@ from pymemcache.client.base import Client
 MEMCACHED_HOST = os.environ.get('MEMCACHED_HOST', 'memcached-service')
 MEMCACHED_PORT = int(os.environ.get('MEMCACHED_PORT', 11211))
 
-SAMPLE_KEY = 'test-rekonf-2017' 
+SAMPLE_KEY = 'test-rekonf-2017'
 SAMPLE_VALUE = 'pb'
 
 def init_client():
@@ -42,12 +43,16 @@ def get_99th_percentile(client, interval=1000):
 app = Flask(__name__)
 cl = None
 
-@app.route('/99th_percentile')
-def wrapper_get_99th_percentile():
+@app.route('/metrics')
+def get_metrics():
     global cl
     if cl is None:
         cl = init_client()
-    return "99th_percentile {}".format(get_99th_percentile(cl)), 200
+
+    response = {
+        "99th_percentile": get_99th_percentile(cl),
+    }
+    return json.dumps(response), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
