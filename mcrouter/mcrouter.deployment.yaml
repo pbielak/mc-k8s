@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mcrouter-deployment
+  labels:
+    app: mcrouter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcrouter
+  template:
+    metadata:
+      labels:
+        app: mcrouter
+    spec:
+      containers:
+      - name: mcrouter
+        image: mcrouter:autodiscovery
+        ports:
+        - containerPort: 5000
