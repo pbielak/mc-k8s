@@ -17,10 +17,14 @@ spec:
       containers:
       - name: memcached-metrics
         image: memcached-metrics:v1
-        ports:
-        - containerPort: 5000
         env:
-        - name: MEMCACHED_HOST
-          value: "memcached-service"
-        - name: MEMCACHED_PORT
-          value: "11211"
+        - name: MCROUTER_HOST
+          value: "mcrouter-service"
+        - name: MCROUTER_PORT
+          value: "5000"
+        - name: INFLUXDB_HOST
+          value: "influxdb-service"
+        - name: INFLUXDB_PORT
+          value: "8086"
+        - name: INFLUXDB_DBNAME
+          value: "metrics"

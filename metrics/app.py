@@ -2,22 +2,27 @@ import json
 import os
 import time
 
-from flask import Flask
-import numpy as np
+import requests
 
 from pymemcache.client.base import Client
 
 
-MEMCACHED_HOST = os.environ.get('MEMCACHED_HOST', 'memcached-service')
-MEMCACHED_PORT = int(os.environ.get('MEMCACHED_PORT', 11211))
+MCROUTER_HOST = os.environ.get('MCROUTER_HOST', 'mcrouter-service')
+MCROUTER_PORT = int(os.environ.get('MCROUTER_PORT', 5000))
+
+INFLUXDB_HOST = os.environ.get('INFLUXDB_HOST', 'influxdb-service')
+INFLUXDB_PORT = int(os.environ.get('INFLUXDB_PORT', 8086))
+INFLUXDB_DBNAME = os.environ.get('INFLUXDB_DBNAME', 'metrics')
 
 SAMPLE_KEY = 'test-rekonf-2017'
 SAMPLE_VALUE = 'pb'
 
+
 def init_client():
-    client = Client((MEMCACHED_HOST, MEMCACHED_PORT))
+    client = Client((MCROUTER_HOST, MCROUTER_PORT))
     client.set(SAMPLE_KEY, SAMPLE_VALUE)
     return client
+
 
 def get_latency(client):
     """
@@ -27,32 +32,67 @@ def get_latency(client):
     client.get(SAMPLE_KEY)
     return (time.time() - st) * 1000.0
 
-def get_99th_percentile(client, interval=1000):
+
+last_nb_get_cmd = None
+prev_time = None
+
+
+def get_qps(client):
     """
-    Get 99th percentile from a given measurement interval (ms)
+    Return queries per second
     """
-    total_time = 0
-    latencies = []
-    while total_time < interval:
-        latency = get_latency(client)
-        total_time += latency
-        latencies.append(latency)
-    return np.percentile(np.array(latencies), 99)
+    global last_nb_get_cmd
+    global prev_time
+
+    st = client.stats()
+    nb_cmd_get = st['cmd_get_count']
+
+    if last_nb_get_cmd is None:
+        last_nb_get_cmd = nb_cmd_get
+        prev_time = time.time()
+        return 0
+
+    curr_time = time.time()
+    qps = (nb_cmd_get - last_nb_get_cmd) / (curr_time - prev_time)
+
+    last_nb_get_cmd = nb_cmd_get
+    prev_time = curr_time
+
+    return qps
 
 
-app = Flask(__name__)
-cl = None
+class InfluxDBLogger(object):
+    def __init__(self, host, port, dbname):
+        self.host = host
+        self.port = port
+        self.dbname = dbname
 
-@app.route('/metrics')
-def get_metrics():
-    global cl
-    if cl is None:
-        cl = init_client()
+    def _get_url(self):
+        return 'http://{}:{}/write?db={}'.format(self.host, self.port, self.dbname)
 
-    response = {
-        "99th_percentile": get_99th_percentile(cl),
-    }
-    return json.dumps(response), 200
+    def post(self, data):
+        res = requests.post(url=self._get_url(), data=data)
+        if not res.ok:
+            raise RuntimeError('Could not post to influx: {}'.format(res.text))
+
+
+def get_influxdb_logger():
+    return InfluxDBLogger(INFLUXDB_HOST, INFLUXDB_PORT, INFLUXDB_DBNAME)
+
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    cl = init_client()
+    influx_logger = get_influxdb_logger()
+    while True:
+        latency = get_latency(cl)
+        qps = get_qps(cl)
+
+        influx_logger.post(
+            data='metrics,collector=1 latency={},qps={}'.format(
+                latency,
+                qps
+            )
+        )
+
+        time.sleep(1)
+

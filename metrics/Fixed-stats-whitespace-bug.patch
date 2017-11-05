@@ -1,0 +1,28 @@
+From cb69e3bd0119edecb1cd3cceca40ab98a3fc6578 Mon Sep 17 00:00:00 2001
+From: Piotr Bielak <piotrbielak2@gmail.com>
+Date: Sun, 5 Nov 2017 15:15:55 +0100
+Subject: [PATCH] Fixed stats whitespace bug
+
+---
+ pymemcache/client/base.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/pymemcache/client/base.py b/pymemcache/client/base.py
+index 7ac2224..030a7d4 100644
+--- a/pymemcache/client/base.py
++++ b/pymemcache/client/base.py
+@@ -713,7 +713,10 @@ class Client(object):
+             # stats commands can have multiple arguments
+             #   `stats cachedump 1 1`
+             checked_keys = [self.check_key(k) for k in keys]
+-            cmd = name + b' ' + b' '.join(checked_keys) + b'\r\n'
++            if not checked_keys:
++                cmd = name + b'\r\n'
++            else:
++                cmd = name + b' ' + b' '.join(checked_keys) + b'\r\n'
+         else:
+             checked_keys = dict((self.check_key(k), k) for k in keys)
+             cmd = name + b' ' + b' '.join(checked_keys) + b'\r\n'
+-- 
+2.10.1 (Apple Git-78)
+
