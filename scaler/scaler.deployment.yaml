@@ -18,7 +18,15 @@ spec:
       - name: memcached-scaler
         image: memcached-scaler:v1
         env:
-        - name: METRICS_HOST
-          value: "memcached-metrics-service"
-        - name: METRICS_PORT
-          value: "5000"
+        - name: INFLUXDB_HOST
+          value: "influxdb-service"
+        - name: INFLUXDB_PORT
+          value: "8086"
+        - name: INFLUXDB_DBNAME
+          value: "metrics"
+        - name: LATENCY_SCALING_THRESHOLD
+          value: "50"
+        - name: QPS_SCALING_THRESHOLD
+          value: "10000"
+        - name: MAX_REPLICAS
+          value: "5"

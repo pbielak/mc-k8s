@@ -278,20 +278,7 @@
           "targets": [
             {
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "metrics",
               "orderByTime": "ASC",
               "policy": "default",
@@ -304,10 +291,6 @@
                       "latency"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
                   }
                 ]
               ],
@@ -380,7 +363,7 @@
             "lineColor": "rgb(31, 120, 193)",
             "show": false
           },
-          "tableColumn": "",
+          "tableColumn": "percentile",
           "targets": [
             {
               "alias": "lat_99_perc",
@@ -388,20 +371,17 @@
               "groupBy": [
                 {
                   "params": [
-                    "$__interval"
+                    "15s"
                   ],
                   "type": "time"
-                },
-                {
-                  "params": [
-                    "previous"
-                  ],
-                  "type": "fill"
                 }
               ],
+              "hide": false,
               "measurement": "metrics",
               "orderByTime": "ASC",
               "policy": "default",
+              "query": "SELECT percentile(\"latency\", 99) FROM \"metrics\" WHERE time >= now() - 1m",
+              "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -506,23 +486,12 @@
             {
               "alias": "qps",
               "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "previous"
-                  ],
-                  "type": "fill"
-                }
-              ],
+              "groupBy": [],
               "measurement": "metrics",
               "orderByTime": "ASC",
               "policy": "default",
+              "query": "SELECT \"qps\" FROM \"metrics\" WHERE time >= now() - 15s limit 1",
+              "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
               "select": [
@@ -532,10 +501,6 @@
                       "qps"
                     ],
                     "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
                   }
                 ]
               ],
@@ -601,5 +566,5 @@
   },
   "timezone": "",
   "title": "Memcached-K8s Autoscaling",
-  "version": 1
+  "version": 5
 }
